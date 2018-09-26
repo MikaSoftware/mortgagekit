@@ -1,13 +1,14 @@
 package mortgagekit
 
 import (
-    "fmt"
+    "errors"
+    // "fmt"
     "github.com/rhymond/go-money"
 )
 
 type MortgageCalculator struct {
-    totalAmount *money.Money
-    downPaymentAmount *money.Money
+    totalLoan *money.Money
+    downPayment *money.Money
     amortizationYear int64
     annualInterestRate float64
     paymentFrequency int64
@@ -16,10 +17,10 @@ type MortgageCalculator struct {
     currency string
 }
 
-
+// Initializer function which will create `MortgageCalculator` object.
 func New(
-    totalAmount *money.Money,
-    downPaymentAmount *money.Money,
+    totalLoan *money.Money,
+    downPayment *money.Money,
     amortizationYear int64,
     annualInterestRate float64,
     paymentFrequency int64,
@@ -27,8 +28,8 @@ func New(
     firstPaymentDate string,
     currency string) MortgageCalculator {
     mc := MortgageCalculator {
-        totalAmount,
-        downPaymentAmount,
+        totalLoan,
+        downPayment,
         amortizationYear,
         annualInterestRate,
         paymentFrequency,
@@ -39,9 +40,25 @@ func New(
     return mc
 }
 
+func (mc *MortgageCalculator) GetPercentOfLoanFinanced() (float64, error) {
+    // Defesnive code.
+    if mc.totalLoan.Amount() == 0 {
+        return 0, errors.New("Total amount cannot be zero.")
+    }
 
-func ExampleHello() bool {
-    fmt.Println("hello")
-    // Output: hello
-    return true
+    // Calculate our loan princinple.
+    remainingLoan, err := mc.totalLoan.Subtract(mc.downPayment)
+
+    // Defensive Code.
+    if err != nil {
+        return 0, err
+    }
+
+    // Calculate the remaining rate.
+    remainingLoanFloat := float64(remainingLoan.Amount())
+    totalLoanFloat := float64(mc.totalLoan.Amount())
+    amountFinancedPercent := remainingLoanFloat / totalLoanFloat
+
+    // Return the remaining percent.
+    return amountFinancedPercent * 100, nil
 }
